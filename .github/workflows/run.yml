@@ -1,0 +1,35 @@
+name: Run
+
+on:
+  workflow_dispatch:
+
+# Partial mitigation for Log4Shell
+env:
+  LOG4J_FORMAT_MSG_NO_LOOKUPS: true
+
+jobs:
+  os_matrix:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        timeout-minutes: 1
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - name: Set up Java
+        uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0
+        with:
+          distribution: 'temurin'
+          java-version-file: '.java-version'
+      - name: Set up Gradle
+        uses: gradle/gradle-build-action@842c587ad8aa4c68eeba24c396e15af4c2e9f30a
+        timeout-minutes: 10
+        with:
+          dependency-graph: generate-and-submit
+          gradle-home-cache-cleanup: true
+      - name: Run
+        timeout-minutes: 15
+        run: |
+          ./gradlew run
